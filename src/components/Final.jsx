@@ -57,41 +57,42 @@ const Final = ({ scores, setScores, teamNames }) => {
       if (qIndex >= finalQuestions.length) return;
 
       const key = parseInt(e.key);
-      if (isNaN(key)) return;
-
+      
       // Prevent spam/multiple answers for same Q
       const playerKey = roundPhase === 1 ? 'p1' : 'p2';
       if (results[qIndex]?.[playerKey]) return;
 
-      // 1-5: Reveal answer
-      if (key >= 1 && key <= 5) {
-        const currentQ = finalQuestions[qIndex];
-        const answerIdx = key - 1;
-        
-        if (currentQ.answers[answerIdx]) {
-           const ans = currentQ.answers[answerIdx];
-           
-           // If Round 2, Check Duplicate
-           if (roundPhase === 3) {
-               const p1Ans = results[qIndex]?.p1?.answer;
-               // Check ID match
-               // Note: If p1Ans was id:-1 (dash), it won't match any real answer.id
-               if (p1Ans && p1Ans.id === ans.id) {
-                   // DUPLICATE!
-                   handleDuplicate();
-                   return;
+      // 1-N: Reveal answer (Dynamic based on answers length)
+      if (!isNaN(key)) {
+          const currentQ = finalQuestions[qIndex];
+          if (key >= 1 && key <= currentQ.answers.length) {
+            const answerIdx = key - 1;
+            
+            if (currentQ.answers[answerIdx]) {
+               const ans = currentQ.answers[answerIdx];
+               
+               // If Round 2, Check Duplicate
+               if (roundPhase === 3) {
+                   const p1Ans = results[qIndex]?.p1?.answer;
+                   // Check ID match
+                   // Note: If p1Ans was id:-1 (dash), it won't match any real answer.id
+                   if (p1Ans && p1Ans.id === ans.id) {
+                       // DUPLICATE!
+                       handleDuplicate();
+                       return;
+                   }
                }
-           }
 
-           // Valid Answer
-           submitAnswer(ans, false);
-        }
+               // Valid Answer
+               submitAnswer(ans, false);
+            }
+          }
       }
 
-      // 6: Error / No Answer
-      if (key === 6) {
-        // Immediate "No Answer" submission
-        submitAnswer({ text: "---", points: 0, id: -1 }, false);
+      // 'x': Error / No Answer
+      if (e.key.toLowerCase() === 'x') {
+        // Immediate "No Answer" submission with Error Flag
+        submitAnswer({ text: "---", points: 0, id: -1 }, true);
       }
     };
 
@@ -109,6 +110,11 @@ const Final = ({ scores, setScores, teamNames }) => {
   const submitAnswer = (ans, isErr) => {
       const playerKey = roundPhase === 1 ? 'p1' : 'p2';
       const activeTeam = roundPhase === 1 ? p1Team : p2Team;
+
+      if (isErr) {
+          setCurrentError(true);
+          setTimeout(() => setCurrentError(false), 1000);
+      }
 
       setResults(prev => ({
           ...prev,

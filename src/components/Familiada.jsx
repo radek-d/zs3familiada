@@ -127,18 +127,17 @@ const Familiada = ({ scores, setScores, teamNames }) => {
   useEffect(() => {
     const handleKeyDown = (e) => {
        const key = parseInt(e.key);
-       if (isNaN(key)) return;
-
-       // 1-5: Reveal Answer
-       if (key >= 1 && key <= 5) {
+       
+       // Dynamic: 1 to N (answers length)
+       if (!isNaN(key) && key >= 1 && key <= currentQuestion.answers.length) {
            const idx = key - 1;
            if (currentQuestion.answers[idx]) {
                handleReveal(currentQuestion.answers[idx]);
            }
        }
        
-       // 6: Trigger Error (Block if round finished)
-       if (key === 6 && !roundFinished) {
+       // 'x': Trigger Error (Block if round finished)
+       if (e.key.toLowerCase() === 'x' && !roundFinished) {
            handleError();
        }
     };
